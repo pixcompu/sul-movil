@@ -17,6 +17,7 @@ import java.util.UUID;
 public abstract class LocationBeaconActivity extends LocationActivity implements BeaconManager.MonitoringListener {
 
     private BeaconManager mManager;
+    private boolean inBeaconZone = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -32,12 +33,18 @@ public abstract class LocationBeaconActivity extends LocationActivity implements
 
     @Override
     public void onEnteredRegion(Region region, List<Beacon> list) {
+        inBeaconZone = true;
         Notifier.showNotification(this, "Beacon dice: ", "Hola bienvenido a la zona beacon");
     }
 
     @Override
     public void onExitedRegion(Region region) {
+        inBeaconZone = false;
         Notifier.showNotification(this, "Beacon dice: ", "Nos vemos pronto!");
+    }
+
+    protected boolean isInBeaconZone(){
+        return inBeaconZone;
     }
 
     private BeaconManager getBeaconManager() {

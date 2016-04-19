@@ -27,65 +27,20 @@ import com.example.pix.sulmovil.util.Notifier;
 @SuppressWarnings("MissingPermission")
 public abstract class LocationActivity extends AppCompatActivity implements LocationListener {
 
-    protected final int APP_USABLE_RADIUS = 20;
-    protected final int WARNING_RADIUS = 15;
+    protected final int APP_USABLE_RADIUS = 100;
+    protected final int SAFE_RADIUS = 85;
     private Location mExpectedLocation;
     private LocationManager mManager;
+    private int STATE = 0;
+    private final int ON_DANGER = 2;
+    private final int ON_WARNING = 1;
+    private final int ON_USABLE = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.mExpectedLocation = getExpectedLocation();
         this.mManager = getManager();
-    }
-
-    private LocationManager getManager() {
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        if ( locationPermissionsAvailable() ) {
-            final int MIN_TIME_BETWEEN_UPDATES = 1000;
-            final int MIN_DISTANCE_CHANGE_BETWEEN_UPDATES = 1;
-
-            Criteria criteria = new Criteria();
-            criteria.setPowerRequirement(Criteria.POWER_HIGH);
-            criteria.setAccuracy(Criteria.ACCURACY_FINE);
-            criteria.setAltitudeRequired(false);
-            criteria.setBearingRequired(false);
-            criteria.setCostAllowed(true);
-
-            validateLocationSettings();
-            locationManager.requestLocationUpdates(
-                    locationManager.getBestProvider(criteria, true),
-                    MIN_TIME_BETWEEN_UPDATES,
-                    MIN_DISTANCE_CHANGE_BETWEEN_UPDATES,
-                    this);
-        } else {
-            Notifier.showMessage(this, "Me mori");
-        }
-        return locationManager;
-    }
-
-    private void validateLocationSettings(){
-        if( ! isLocationEnabled( this )){
-
-            final Context current = this;
-            AlertDialog.Builder dialog = new AlertDialog.Builder( current );
-            dialog.setMessage("Parece que la localizacion no esta activada, ¿Desea activar la localizacion para usar SUBMovil?");
-            dialog.setPositiveButton("SI", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                    Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    current.startActivity( myIntent );
-                }
-            });
-            dialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
-
-                @Override
-                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                    showLogin();
-                }
-            });
-            dialog.show();
-        }
     }
 
     @Override
@@ -144,16 +99,25 @@ public abstract class LocationActivity extends AppCompatActivity implements Loca
 
         if(  currentDistance > APP_USABLE_RADIUS ){
 
-            onDangerArea( currentLocation , currentDistance );
+            if( STATE != ON_DANGER){
+                STATE = ON_DANGER;
+                onDangerArea( currentLocation , currentDistance );
+            }
 
-        }else if( currentDistance > WARNING_RADIUS ){
 
-            onWarningArea( currentLocation , currentDistance );
+        }else if( currentDistance > SAFE_RADIUS){
+
+            if( STATE != ON_WARNING){
+                STATE = ON_WARNING;
+                onWarningArea( currentLocation , currentDistance );
+            }
 
         }else{
 
-            onUsableArea( currentLocation , currentDistance );
-
+            if( STATE != ON_USABLE ){
+                STATE = ON_USABLE;
+                onUsableArea( currentLocation , currentDistance );
+            }
         }
     }
 
@@ -162,23 +126,40 @@ public abstract class LocationActivity extends AppCompatActivity implements Loca
     }
 
     protected void onWarningArea( Location currentLocation, float currentDistance) {
-       Notifier.showNotification( this , "¡Cuidado!", "Estas por salir de la facultad, la aplicacion dejará de funcionar");
+       Notifier.showNotification( this , "¡Cuidado!", "Estas por salir de la facultad, SULMóvil dejará de funcionar");
     }
 
     protected void onDangerArea( Location currentLocation, float currentDistance) {
-        //Notifier.showMessage(this, "Has salido de la region aceptable por " + (currentDistance - APP_USABLE_RADIUS) + " mts");
         //TODO: Implementar deslogueo de sesion.
+        Notifier.showMessage(this, "TODO: realizar el logout, estas fuera de la zona por " + currentDistance + " metros");
     }
 
     protected Location getExpectedLocation() {
-        final double EXPECTED_LATITUDE = 21.041220;
-        final double EXPECTED_LONGITUDE = -89.647416;
+        final double EXPECTED_LATITUDE = 21.048281;
+        final double EXPECTED_LONGITUDE = -89.644165;
 
         Location expected = new Location("");
         expected.setLatitude(EXPECTED_LATITUDE);
         expected.setLongitude(EXPECTED_LONGITUDE);
 
         return expected;
+    }
+
+    protected boolean isNetworkEnabled() {
+        boolean haveConnectedWifi = false;
+        boolean haveConnectedMobile = false;
+
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo[] netInfo = cm.getAllNetworkInfo();
+        for (NetworkInfo ni : netInfo) {
+            if (ni.getTypeName().equalsIgnoreCase("WIFI"))
+                if (ni.isConnected())
+                    haveConnectedWifi = true;
+            if (ni.getTypeName().equalsIgnoreCase("MOBILE"))
+                if (ni.isConnected())
+                    haveConnectedMobile = true;
+        }
+        return haveConnectedWifi || haveConnectedMobile;
     }
 
     private void showLogin(){
@@ -197,7 +178,56 @@ public abstract class LocationActivity extends AppCompatActivity implements Loca
                                 PackageManager.PERMISSION_GRANTED;
     }
 
-    private static boolean isLocationEnabled(Context context) {
+    private LocationManager getManager() {
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if ( locationPermissionsAvailable() ) {
+            final int MIN_TIME_BETWEEN_UPDATES = 1000;
+            final int MIN_DISTANCE_CHANGE_BETWEEN_UPDATES = 1;
+
+            Criteria criteria = new Criteria();
+            criteria.setPowerRequirement(Criteria.POWER_HIGH);
+            criteria.setAccuracy(Criteria.ACCURACY_FINE);
+            criteria.setAltitudeRequired(false);
+            criteria.setBearingRequired(false);
+            criteria.setCostAllowed(true);
+
+            validateLocationSettings();
+            locationManager.requestLocationUpdates(
+                    locationManager.getBestProvider(criteria, true),
+                    MIN_TIME_BETWEEN_UPDATES,
+                    MIN_DISTANCE_CHANGE_BETWEEN_UPDATES,
+                    this);
+        } else {
+            Notifier.showMessage(this, "Me mori");
+        }
+        return locationManager;
+    }
+
+    private void validateLocationSettings(){
+        if( ! isLocationEnabled( this )){
+
+            final Context current = this;
+            AlertDialog.Builder dialog = new AlertDialog.Builder( current );
+            dialog.setMessage("Parece que la localizacion no esta activada, ¿Desea activar la localizacion para usar SUBMovil?");
+            dialog.setPositiveButton("SI", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                    Intent myIntent = new Intent( Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    current.startActivity( myIntent );
+                }
+            });
+            dialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface paramDialogInterface, int paramInt) {
+                    showLogin();
+                }
+            });
+            dialog.show();
+        }
+    }
+
+    private boolean isLocationEnabled(Context context) {
         int locationMode = 0;
         String locationProviders;
 
@@ -217,20 +247,4 @@ public abstract class LocationActivity extends AppCompatActivity implements Loca
         }
     }
 
-    protected boolean haveNetworkConnection() {
-        boolean haveConnectedWifi = false;
-        boolean haveConnectedMobile = false;
-
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo[] netInfo = cm.getAllNetworkInfo();
-        for (NetworkInfo ni : netInfo) {
-            if (ni.getTypeName().equalsIgnoreCase("WIFI"))
-                if (ni.isConnected())
-                    haveConnectedWifi = true;
-            if (ni.getTypeName().equalsIgnoreCase("MOBILE"))
-                if (ni.isConnected())
-                    haveConnectedMobile = true;
-        }
-        return haveConnectedWifi || haveConnectedMobile;
-    }
 }

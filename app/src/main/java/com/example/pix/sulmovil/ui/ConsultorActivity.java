@@ -19,7 +19,7 @@ import com.example.pix.sulmovil.R;
 import com.example.pix.sulmovil.logic.auth.Authenticator;
 import com.example.pix.sulmovil.logic.web.RequestListener;
 import com.example.pix.sulmovil.logic.web.Requester;
-import com.example.pix.sulmovil.ui.templates.LocationActivity;
+import com.example.pix.sulmovil.ui.templates.LocationBeaconActivity;
 import com.example.pix.sulmovil.util.Notifier;
 
 import org.json.JSONException;
@@ -27,29 +27,16 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 
-public class ConsultorActivity extends LocationActivity
+public class ConsultorActivity extends LocationBeaconActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private ProgressDialog mProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consultor);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        if (drawer != null) {
-            drawer.addDrawerListener(toggle);
-        }
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        if (navigationView != null) {
-            navigationView.setNavigationItemSelectedListener(this);
-        }
-
+        setUpDrawer();
         requestInformation();
     }
 
@@ -155,8 +142,9 @@ public class ConsultorActivity extends LocationActivity
     };
 
     private void requestInformation(){
-        if( !haveNetworkConnection() ){
-            Notifier.showMessage(this, "¡Para ver el contenido debes tener internet!");
+
+        if( !isNetworkEnabled() ){
+            Notifier.showMessage(this, "¡Para obtener el contenido debes tener tu internet activado!");
             return;
         }
         this.mProgressDialog = ProgressDialog.show(this, "Solicitando Informacion", "Espere, por favor", true, false);
@@ -172,8 +160,6 @@ public class ConsultorActivity extends LocationActivity
                 mAutenticationHandler
         );
     }
-
-    private ProgressDialog mProgressDialog;
 
     private void showLogoutDialog() {
         new AlertDialog.Builder(this)
@@ -197,7 +183,28 @@ public class ConsultorActivity extends LocationActivity
     }
 
     private void showMap() {
-        Intent intent = new Intent(this, MapActivity.class);
-        startActivity(intent);
+        if( isNetworkEnabled() ){
+            Intent intent = new Intent(this, MapActivity.class);
+            startActivity(intent);
+        }else{
+            Notifier.showMessage(this, "¡Activa tu conexion a Internet primero!");
+        }
+    }
+
+    private void setUpDrawer() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        if (drawer != null) {
+            drawer.addDrawerListener(toggle);
+        }
+        toggle.syncState();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        if (navigationView != null) {
+            navigationView.setNavigationItemSelectedListener(this);
+        }
     }
 }
