@@ -1,9 +1,10 @@
 package com.example.pix.sulmovil.ui;
 
-import android.app.ProgressDialog;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.location.Location;
+import android.content.IntentFilter;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -11,33 +12,31 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.estimote.sdk.Beacon;
+import com.estimote.sdk.Region;
 import com.example.pix.sulmovil.R;
 import com.example.pix.sulmovil.logic.auth.Authenticator;
-import com.example.pix.sulmovil.logic.web.RequestListener;
-import com.example.pix.sulmovil.logic.web.Requester;
 import com.example.pix.sulmovil.ui.templates.LocationBeaconActivity;
 import com.example.pix.sulmovil.util.Notifier;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.HashMap;
+import java.util.List;
 
 public class ConsultorActivity extends LocationBeaconActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private ProgressDialog mProgressDialog;
+    private NfcAdapter mNfcAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consultor);
+        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
         setUpDrawer();
-        requestInformation();
     }
 
     @Override
@@ -53,20 +52,42 @@ public class ConsultorActivity extends LocationBeaconActivity
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.consultor, menu);
-        return true;
+    public void onEnteredRegion(Region region, List<Beacon> list) {
+        if( mNfcAdapter != null ){
+            Intent intent = new Intent(this, SecretContent.class);
+            intent.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
+
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                    intent, 0);
+            IntentFilter[] intentFilter = new IntentFilter[] {};
+
+            mNfcAdapter.enableForegroundDispatch(this, pendingIntent, intentFilter,
+                    null);
+            ((TextView)findViewById(R.id.consultor_status)).setText("Colocame sobre el TAG NFC");
+        }else{
+            ((TextView)findViewById(R.id.consultor_status)).setText("Si tuvieras NFC podrias ya colocarme sobre él :(");
+        }
+        ((ImageView)findViewById(R.id.consultor_image)).setImageResource(R.drawable.happy);
+        super.onEnteredRegion(region, list);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_refresh) {
-            requestInformation();
+    public void onExitedRegion(Region region) {
+        if(mNfcAdapter != null){
+            mNfcAdapter.disableForegroundDispatch(this);
         }
+        ((ImageView)findViewById(R.id.consultor_image)).setImageResource(R.drawable.sad);
+        ((TextView)findViewById(R.id.consultor_status)).setText("No estas cerca del Beacon");
+        super.onExitedRegion(region);
+    }
 
-        return super.onOptionsItemSelected(item);
+
+    @Override
+    protected void onPause() {
+        if(mNfcAdapter != null){
+            mNfcAdapter.disableForegroundDispatch(this);
+        }
+        super.onPause();
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -75,11 +96,11 @@ public class ConsultorActivity extends LocationBeaconActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_saved) {
-            Notifier.showMessage(this, "TODO: Mostrar Guardados");
+            Notifier.showMessage(this, "No tienes guardados");
         } else if (id == R.id.nav_localization) {
             showMap();
         } else if (id == R.id.nav_about) {
-            Notifier.showMessage(this, "TODO: Mostrando acerca de...");
+            Notifier.showMessage(this, "SULMovil SA de CV");
         } else if (id == R.id.nav_logout) {
             showLogoutDialog();
         }
@@ -89,76 +110,6 @@ public class ConsultorActivity extends LocationBeaconActivity
             drawer.closeDrawer(GravityCompat.START);
         }
         return true;
-    }
-
-
-    private RequestListener mAutenticationHandler = new RequestListener() {
-
-        @Override
-        public void onSuccess(String response) {
-
-            try {
-                JSONObject json = new JSONObject( response );
-                JSONObject header = json.getJSONObject("header");
-                String token = header.getString("token");
-
-                HashMap<String, String> headers = new HashMap<>();
-                headers.put("Authorization", token);
-                Location center = getExpectedLocation();
-                new Requester().get(
-                        "http://www.hungrr.com.mx/api/v1/restaurants/"+ center.getLatitude() +"/" + center.getLongitude(),
-                        headers,
-                        mRequestHandler
-                );
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-                Notifier.showMessage(ConsultorActivity.this, e.getMessage());
-            }
-        }
-
-        @Override
-        public void onFailure(int code, String description) {
-            Notifier.showMessage(ConsultorActivity.this, description);
-        }
-    };
-
-    private RequestListener mRequestHandler = new RequestListener() {
-        @Override
-        public void onSuccess(String response) {
-            ((TextView)findViewById(R.id.consultor_label_response)).setText(response.replace("\\",""));
-            if(mProgressDialog != null){
-                mProgressDialog.dismiss();
-            }
-        }
-
-        @Override
-        public void onFailure(int code, String description) {
-            Notifier.showMessage(ConsultorActivity.this, description);
-            if(mProgressDialog != null){
-                mProgressDialog.dismiss();
-            }
-        }
-    };
-
-    private void requestInformation(){
-
-        if( !isNetworkEnabled() ){
-            Notifier.showMessage(this, "¡Para obtener el contenido debes tener tu internet activado!");
-            return;
-        }
-        this.mProgressDialog = ProgressDialog.show(this, "Solicitando Informacion", "Espere, por favor", true, false);
-        Requester requester = new Requester();
-        HashMap<String, String> formData = new HashMap<>();
-        formData.put("email", "swagtachi@outlook.com");
-        formData.put("password", "raruto");
-        ((TextView)findViewById(R.id.consultor_label_response)).setText("Buscando informacion");
-        requester.post(
-                "http://www.hungrr.com.mx/api/v1/login",
-                Requester.NO_DATA,
-                formData,
-                mAutenticationHandler
-        );
     }
 
     private void showLogoutDialog() {

@@ -45,7 +45,7 @@ public class LoginActivity extends AppCompatActivity {
                 enterApplication();
 
             } catch (AuthException e) {
-                Notifier.showMessage(this, e.getMessage() );
+                Notifier.showMessage( this, e.getMessage() );
             }
 
         }

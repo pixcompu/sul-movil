@@ -51,7 +51,7 @@ public class MapActivity extends LocationBeaconActivity implements OnMapReadyCal
         );
 
         CameraPosition cameraPosition = new CameraPosition.Builder().target(
-                initialPoint).zoom(13).build();
+                initialPoint).zoom(17).build();
         this.mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         this.mCircle = this.mMap.addCircle(
                 new CircleOptions()

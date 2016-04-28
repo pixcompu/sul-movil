@@ -81,19 +81,14 @@ public abstract class LocationActivity extends AppCompatActivity implements Loca
     }
 
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
+    public void onStatusChanged(String provider, int status, Bundle extras) {}
 
     @Override
-    public void onProviderEnabled(String provider) {
-
-    }
+    public void onProviderEnabled(String provider) {}
 
     @Override
-    public void onProviderDisabled(String provider) {
+    public void onProviderDisabled(String provider) {}
 
-    }
 
     protected void onLocationUpdated(Location currentLocation, float currentDistance){
 
@@ -103,7 +98,6 @@ public abstract class LocationActivity extends AppCompatActivity implements Loca
                 STATE = ON_DANGER;
                 onDangerArea( currentLocation , currentDistance );
             }
-
 
         }else if( currentDistance > SAFE_RADIUS){
 
@@ -130,8 +124,8 @@ public abstract class LocationActivity extends AppCompatActivity implements Loca
     }
 
     protected void onDangerArea( Location currentLocation, float currentDistance) {
-        //TODO: Implementar deslogueo de sesion.
-        Notifier.showMessage(this, "TODO: realizar el logout, estas fuera de la zona por " + currentDistance + " metros");
+        forceLogout();
+        Notifier.showMessage(this, "Estas fuera de la zona por " + (currentDistance - APP_USABLE_RADIUS) + " metros");
     }
 
     protected Location getExpectedLocation() {
@@ -162,11 +156,11 @@ public abstract class LocationActivity extends AppCompatActivity implements Loca
         return haveConnectedWifi || haveConnectedMobile;
     }
 
-    private void showLogin(){
+    private void forceLogout(){
         new Authenticator( this ).logOut();
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
-        finish();
+        finishAffinity();
     }
 
     private boolean locationPermissionsAvailable(){
@@ -220,7 +214,7 @@ public abstract class LocationActivity extends AppCompatActivity implements Loca
 
                 @Override
                 public void onClick(DialogInterface paramDialogInterface, int paramInt) {
-                    showLogin();
+                    forceLogout();
                 }
             });
             dialog.show();

@@ -1,5 +1,7 @@
 package com.example.pix.sulmovil.ui.templates;
 
+import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 
@@ -11,18 +13,35 @@ import com.example.pix.sulmovil.util.Notifier;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by PIX on 15/04/2016.
- */
 public abstract class LocationBeaconActivity extends LocationActivity implements BeaconManager.MonitoringListener {
 
     private BeaconManager mManager;
+    private BluetoothAdapter mBluetoothAdapter;
     private boolean inBeaconZone = false;
+
+    private static final int REQUEST_ENABLE_BT = 2;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.mManager = getBeaconManager();
+
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mBluetoothAdapter == null) {
+            Notifier.showMessage(this, "Tu dispositivo no tiene bluetooth");
+            finish();
+            return;
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!mBluetoothAdapter.isEnabled()) {
+            Notifier.showMessage( this, "Activa tu bluetooth primero");
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+        }
     }
 
     @Override

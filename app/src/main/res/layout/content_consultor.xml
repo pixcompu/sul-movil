@@ -15,11 +15,22 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:context="com.example.pix.sulmovil.ui.ConsultorActivity"
         tools:showIn="@layout/app_bar_consultor">
-
-        <TextView
-            android:layout_width="wrap_content"
+        <ImageView
+            android:id="@+id/consultor_image"
+            android:paddingTop="52dp"
             android:layout_height="wrap_content"
-            android:id="@+id/consultor_label_response"
+            android:src="@drawable/sad"
+            android:scaleType="center"
+            android:contentDescription="None"
+            android:layout_width="match_parent" />
+        <TextView
+            android:layout_below="@+id/consultor_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No estas cerca de un Beacon"
+            android:id="@+id/consultor_status"
+            android:textSize="30sp"
+            android:textAlignment="center"
             />
     </RelativeLayout>
 

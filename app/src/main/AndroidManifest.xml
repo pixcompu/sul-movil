@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.pix.sulmovil">
 
+    <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 
@@ -42,7 +43,8 @@
             android:name=".ui.ConsultorActivity"
             android:label="@string/title_activity_consultor"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".ui.MapActivity"></activity>
+        <activity android:name=".ui.MapActivity" />
+        <activity android:name=".ui.SecretContent"></activity>
     </application>
 
 </manifest>
