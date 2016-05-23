@@ -1,27 +1,31 @@
 package com.example.pix.sulmovil.ui;
 
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 
 import com.example.pix.sulmovil.R;
 import com.example.pix.sulmovil.logic.auth.Authenticator;
 import com.example.pix.sulmovil.logic.exception.AuthException;
 import com.example.pix.sulmovil.logic.models.User;
+import com.example.pix.sulmovil.ui.templates.LocationActivity;
 import com.example.pix.sulmovil.util.Notifier;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends LocationActivity {
 
     private Authenticator mAuthenticator;
+    private Button mLoginButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         this.mAuthenticator = new Authenticator( this );
+        this.mLoginButton = (Button)findViewById(R.id.login_button_login);
         if( this.mAuthenticator.hasSessionOpen() ){
             enterApplication();
         }
@@ -50,6 +54,16 @@ public class LoginActivity extends AppCompatActivity {
 
         }
 
+    }
+
+    @Override
+    protected void onDangerArea(Location currentLocation, float currentDistance) {
+        this.mLoginButton.setEnabled(false);
+    }
+
+    @Override
+    protected void onUsableArea(Location currentLocation, float currentDistance) {
+        this.mLoginButton.setEnabled(true);
     }
 
     private boolean validateFields(){

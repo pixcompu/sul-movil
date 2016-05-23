@@ -129,8 +129,8 @@ public abstract class LocationActivity extends AppCompatActivity implements Loca
     }
 
     protected Location getExpectedLocation() {
-        final double EXPECTED_LATITUDE = 21.048281;
-        final double EXPECTED_LONGITUDE = -89.644165;
+        final double EXPECTED_LATITUDE = 21.041056;
+        final double EXPECTED_LONGITUDE = -89.647194;
 
         Location expected = new Location("");
         expected.setLatitude(EXPECTED_LATITUDE);

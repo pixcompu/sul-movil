@@ -2,7 +2,6 @@ package com.example.pix.sulmovil.ui;
 
 import android.location.Location;
 import android.os.Bundle;
-import android.widget.Button;
 
 import com.example.pix.sulmovil.R;
 import com.example.pix.sulmovil.ui.templates.LocationBeaconActivity;
@@ -28,14 +27,10 @@ public class MapActivity extends LocationBeaconActivity implements OnMapReadyCal
     private final int SEMITRANSPARENT_RED = 0x55FF0000;
     private final int SEMITRANSPARENT_GREEN = 0x550DFF00;
 
-    public Button loginButton;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
-
-        loginButton = (Button)findViewById(R.id.login_button_login);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -89,7 +84,6 @@ public class MapActivity extends LocationBeaconActivity implements OnMapReadyCal
     @Override
     protected void onDangerArea(Location currentLocation, float currentDistance) {
         changeRadiusColor(SEMITRANSPARENT_RED);
-        loginButton.setEnabled(false);
         super.onDangerArea(currentLocation, currentDistance);
     }   
 
